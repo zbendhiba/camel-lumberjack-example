@@ -1,0 +1,42 @@
+= camel-lumberjack-example project
+
+This project uses camel-quarkus Lumberjack component using filebeat.
+
+If you want to learn more about apache Camel, please visit its website: https://camel.apache.org/.
+
+== Running the application in dev mode
+
+You can run your application in dev mode that enables live coding using:
+
+[source,shell script]
+----
+./mvnw compile quarkus:dev
+
+----
+
+This will start a Lumberjack server on _localhost:5044_, and will start the route listening on this lumberjack server.
+
+
+== Running filebeat docker container
+
+Run filebeat using the configuration file _filebeat.yml_, pointing to the lumberjack server, as logstash output.
+
+[source,shell script]
+----
+docker run -p 5066:5066 --network=host  --name=filebeat --user=root \
+  --volume="$(pwd)/src/main/resources/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
+  docker.elastic.co/beats/filebeat:7.10.0 filebeat -e -strict.perms=false
+----
+
+== Adding new logs
+Copy the _filebeat.log_ file to log destination.
+
+[source,shell script]
+----
+docker cp src/main/resources/filebeat.log filebeat:/var/log/filebeat.log
+----
+
+== Verify results
+
+Verify logs from camel lumberjack routes in the console.
+Verify that filebat received all ACK, using URL: http://localhost:5066/stats
