@@ -1,0 +1,152 @@
+######################## Filebeat Configuration ############################
+
+# This file is a full configuration example documenting all non-deprecated
+# options in comments. For a shorter configuration example, that contains only
+# the most common options, please see filebeat.yml in the same directory.
+#
+# You can find the full configuration reference here:
+# https://www.elastic.co/guide/en/beats/filebeat/index.html
+
+
+#==========================  Modules configuration =============================
+filebeat.modules:
+
+#------------------------------ Log input --------------------------------
+filebeat.inputs:
+- type: log
+
+  # Change to true to enable this input configuration.
+  enabled: true
+
+  # Paths that should be crawled and fetched. Glob based paths.
+  # To fetch all ".log" files from a specific level of subdirectories
+  # /var/log/*/*.log can be used.
+  # For each file found under this path, a harvester is started.
+  # Make sure not file is defined twice as this can lead to unexpected behaviour.
+  paths:
+    - /var/log/filebeat.log
+
+# Internal queue configuration for buffering events to be published.
+queue:
+  # Queue type by name (default 'mem')
+  # The memory queue will present all available events (up to the outputs
+  # bulk_max_size) to the output, the moment the output is ready to server
+  # another batch of events.
+  mem:
+    # Max number of events the queue can buffer.
+    events: 4096
+
+    # Hints the minimum number of events stored in the queue,
+    # before providing a batch of events to the outputs.
+    # The default value is set to 2048.
+    # A value of 0 ensures events are immediately available
+    # to be sent to the outputs.
+    flush.min_events: 2048
+
+    # Maximum duration after which events are available to the outputs,
+    # if the number of events stored in the queue is < `flush.min_events`.
+    flush.timeout: 1s
+
+
+# ------------------------------ Logstash Output -------------------------------
+output.logstash:
+  # Boolean flag to enable or disable the output module.
+  enabled: true
+
+  # The Logstash hosts
+  hosts: ["localhost:5044"]
+
+  # Number of workers per Logstash host.
+  worker: 1
+
+  # Number of batches to be sent asynchronously to Logstash while processing
+  # new batches.
+  pipelining: 1
+
+  # The number of seconds to wait before trying to reconnect to Logstash
+  # after a network error. After waiting backoff.init seconds, the Beat
+  # tries to reconnect. If the attempt fails, the backoff timer is increased
+  # exponentially up to backoff.max. After a successful connection, the backoff
+  # timer is reset. The default is 1s.
+  backoff.init: 300s
+
+  # The maximum number of seconds to wait before attempting to connect to
+  # Logstash after a network error. The default is 60s.
+  backoff.max: 600s
+
+  # The number of times to retry publishing an event after a publishing failure.
+  # After the specified number of retries, the events are typically dropped.
+  # Some Beats, such as Filebeat and Winlogbeat, ignore the max_retries setting
+  # and retry until all events are published.  Set max_retries to a value less
+  # than 0 to retry until all events are published. The default is 3.
+  max_retries: -1
+
+  # The maximum number of events to bulk in a single Logstash request. The
+  # default is 2048.
+  bulk_max_size: 8 
+
+  # The number of seconds to wait for responses from the Logstash server before
+  # timing out. The default is 30s.
+  timeout: 600s
+
+
+# ================================== Logging ===================================
+
+# There are four options for the log output: file, stderr, syslog, eventlog
+# The file output is the default.
+
+# Sets log level. The default log level is info.
+# Available log levels are: error, warning, info, debug
+logging.level: debug
+
+# Enable debug output for selected components. To enable all selectors use ["*"]
+# Other available selectors are "beat", "publish", "service"
+# Multiple selectors can be chained.
+logging.selectors: ["*"]
+
+# If enabled, Filebeat periodically logs its internal metrics that have changed
+# in the last period. For each metric that changed, the delta from the value at
+# the beginning of the period is logged. Also, the total values for
+# all non-zero internal metrics are logged on shutdown. The default is true.
+logging.metrics.enabled: false
+
+# Logging to rotating files. Set logging.to_files to false to disable logging to
+# files.
+logging.to_files: true
+logging.files:
+  # Configure the path where the logs are written. The default is the logs directory
+  # under the home path (the binary location).
+  path: /var/log/filebeat-logging
+
+  # The name of the files where the logs are written to.
+  name: filebeat
+
+  # Configure log file size limit. If limit is reached, log file will be
+  # automatically rotated
+  rotateeverybytes: 10485760 # = 10MB
+
+  # Number of rotated log files to keep. Oldest files will be deleted first.
+  keepfiles: 7
+
+  # The permissions mask to apply when rotating log files. The default value is 0600.
+  # Must be a valid Unix-style file permissions mask expressed in octal notation.
+  permissions: 0644
+
+
+# =============================== HTTP Endpoint ================================
+
+# Each beat can expose internal metrics through a HTTP endpoint. For security
+# reasons the endpoint is disabled by default. This feature is currently experimental.
+# Stats can be access through http://localhost:5066/stats . For pretty JSON output
+# append ?pretty to the URL.
+
+# Defines if the HTTP endpoint is enabled.
+http.enabled: true
+
+# The HTTP endpoint will bind to this hostname, IP address, unix socket or named pipe.
+# When using IP addresses, it is recommended to only use localhost.
+http.host: localhost
+
+# Port on which the HTTP endpoint will bind. Default is 5066.
+http.port: 5066
+
